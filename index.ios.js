@@ -18,7 +18,7 @@ export default {
   },
 
   authorizeReminder() {
-    return RNCalendarEvents.authorizeReminder();
+    return RNCalendarEvents.authorizeReminders();
   },
 
   fetchAllEvents(startDate, endDate, calendars = []) {
