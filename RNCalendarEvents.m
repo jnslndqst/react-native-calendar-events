@@ -13,6 +13,7 @@ static NSString *const _title = @"title";
 static NSString *const _location = @"location";
 static NSString *const _startDate = @"startDate";
 static NSString *const _endDate = @"endDate";
+static NSString *const _dueDate = @"dueDate";
 static NSString *const _allDay = @"allDay";
 static NSString *const _notes = @"notes";
 static NSString *const _url = @"url";
@@ -210,6 +211,153 @@ RCT_EXPORT_MODULE()
         [response setValue:[error.userInfo valueForKey:@"NSLocalizedDescription"] forKey:@"error"];
     } else {
         [response setValue:calendarEvent.calendarItemIdentifier forKey:@"success"];
+    }
+    return [response copy];
+}
+
+
+- (NSDictionary *)buildAndSaveReminder:(NSDictionary *)details options:(NSDictionary *)options
+{
+    EKReminder *reminder = nil;
+    NSString *calendarId = [RCTConvert NSString:details[_calendarId]];
+    NSString *eventId = [RCTConvert NSString:details[_id]];
+    NSString *title = [RCTConvert NSString:details[_title]];
+    NSString *location = [RCTConvert NSString:details[_location]];
+    // //NSNumber *allDay = [RCTConvert NSNumber:details[_allDay]];
+    // //The start date of the task.
+    // NSDate *startDate = [RCTConvert NSDate:details[_startDate]];
+    // NSCalendar *gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
+
+    // NSDateComponents *startDateComponent = [[NSDateComponents alloc] init];
+    // // Extract date components into components1
+    // NSDateComponents *components1 = [gregorianCalendar components:NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit
+    //                                                  fromDate:startDate];
+
+
+    //The date by which the reminder should be completed.
+    //NSDate *dueDate = [RCTConvert NSDate:details[_dueDate]];
+
+    NSString *notes = [RCTConvert NSString:details[_notes]];
+    NSString *url = [RCTConvert NSString:details[_url]];
+    NSArray *alarms = [RCTConvert NSArray:details[_alarms]];
+    NSString *recurrence = [RCTConvert NSString:details[_recurrence]];
+    NSDictionary *recurrenceRule = [RCTConvert NSDictionary:details[_recurrenceRule]];
+    NSString *availability = [RCTConvert NSString:details[_availability]];
+
+
+    if (eventId) {
+        reminder = (EKReminder *)[self.eventStore calendarItemWithIdentifier:eventId];
+
+    } else {
+        reminder = [EKReminder reminderWithEventStore:self.eventStore];
+       // reminder.calendar = [self.eventStore defaultCalendarForNew];
+        reminder.timeZone = [NSTimeZone defaultTimeZone];
+
+        if (calendarId) {
+            EKCalendar *calendar = [self.eventStore calendarWithIdentifier:calendarId];
+
+            if (calendar) {
+                reminder.calendar = calendar;
+            }
+        }
+    }
+
+    if (title) {
+        reminder.title = title;
+    }
+
+    if (location) {
+        reminder.location = location;
+    }
+
+    // if (startDate) {
+    //     reminder.startDate = startDate;
+    // }
+
+    // if (dueDate) {
+    //     reminder.dueDate = dueDate;
+    // }
+
+    // if (allDay) {
+    //     reminder.allDay = [allDay boolValue];
+    // }
+
+    if (notes) {
+        reminder.notes = notes;
+    }
+
+    if (alarms) {
+        reminder.alarms = [self createCalendarEventAlarms:alarms];
+    }
+
+    if (recurrence) {
+        EKRecurrenceRule *rule = [self createRecurrenceRule:recurrence interval:0 occurrence:0 endDate:nil days: nil weekPositionInMonth: 0];
+        if (rule) {
+            reminder.recurrenceRules = [NSArray arrayWithObject:rule];
+        }
+    }
+
+    // if (recurrenceRule) {
+    //     NSString *frequency = [RCTConvert NSString:recurrenceRule[@"frequency"]];
+    //     NSInteger interval = [RCTConvert NSInteger:recurrenceRule[@"interval"]];
+    //     NSInteger occurrence = [RCTConvert NSInteger:recurrenceRule[@"occurrence"]];
+    //     NSDate *endDate = [RCTConvert NSDate:recurrenceRule[@"endDate"]];
+    //     NSArray *daysOfWeek = [RCTConvert NSArray:recurrenceRule[@"daysOfWeek"]];
+    //     NSInteger weekPositionInMonth = [RCTConvert NSInteger:recurrenceRule[@"weekPositionInMonth"]];
+
+    //     EKRecurrenceRule *rule = [self createRecurrenceRule:frequency interval:interval occurrence:occurrence endDate:endDate days:daysOfWeek weekPositionInMonth: weekPositionInMonth];
+    //     if (rule) {
+    //         reminder.recurrenceRules = [NSArray arrayWithObject:rule];
+    //     } else {
+    //         reminder.recurrenceRules = nil;
+    //     }
+    // }
+
+    // if (availability) {
+    //     reminder.availability = [self availablilityConstantMatchingString:availability];
+    // }
+
+    NSURL *URL = [NSURL URLWithString:[url stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]]];
+    if (URL) {
+        reminder.URL = URL;
+    }
+
+    // if ([details objectForKey:@"structuredLocation"] && [[details objectForKey:@"structuredLocation"] count]) {
+    //     NSDictionary *locationOptions = [details valueForKey:@"structuredLocation"];
+    //     NSDictionary *geo = [locationOptions valueForKey:@"coords"];
+    //     CLLocation *geoLocation = [[CLLocation alloc] initWithLatitude:[[geo valueForKey:@"latitude"] doubleValue]
+    //                                                          longitude:[[geo valueForKey:@"longitude"] doubleValue]];
+        
+    //     reminder.structuredLocation = [EKStructuredLocation locationWithTitle:[locationOptions valueForKey:@"title"]];
+    //     reminder.structuredLocation.geoLocation = geoLocation;
+    //     reminder.structuredLocation.radius = [[locationOptions valueForKey:@"radius"] doubleValue];
+    // }
+
+     return [self saveReminder:reminder options:options];
+
+}
+//buildAndSaveReminder
+- (NSDictionary *)saveReminder:(EKReminder *)reminderEvent options:(NSDictionary *)options
+{
+    NSMutableDictionary *response = [NSMutableDictionary dictionaryWithDictionary:@{@"success": [NSNull null], @"error": [NSNull null]}];
+    // NSDate *exceptionDate = [RCTConvert NSDate:options[@"exceptionDate"]];
+    // EKSpan eventSpan = EKSpanFutureEvents;
+
+    // if (exceptionDate) {
+    //     reminderEvent.startDate = exceptionDate;
+    //     eventSpan = EKSpanThisEvent;
+    // }
+
+    ///Users/jnslndqst/git/NavigationLab/node_modules/react-native-calendar-events/RNCalendarEvents.m:352:37: error: no visible @interface for 'EKEventStore' declares the selector 'saveReminder:span:commit:error:'
+    //BOOL success = [self.eventStore saveReminder:reminderEvent span:eventSpan commit:YES error:&error];
+
+    NSError *error = nil;
+    BOOL success = [self.eventStore saveReminder:reminderEvent commit:YES error:&error];
+
+    if (!success) {
+        [response setValue:[error.userInfo valueForKey:@"NSLocalizedDescription"] forKey:@"error"];
+    } else {
+        [response setValue:reminderEvent.calendarItemIdentifier forKey:@"success"];
     }
     return [response copy];
 }
@@ -721,6 +869,7 @@ RCT_EXPORT_METHOD(authorizeEventStore:(RCTPromiseResolveBlock)resolve rejecter:(
     }];
 }
 
+
 RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     if (![self isCalendarAccessGranted]) {
@@ -728,7 +877,7 @@ RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
         return;
     }
 
-    NSArray* calendars = [self.eventStore calendarsForEntityType:EKEntityTypeEvent];
+    NSArray* calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
 
     if (!calendars) {
         reject(@"error", @"error finding calendars", nil);
@@ -890,7 +1039,7 @@ RCT_EXPORT_METHOD(saveEvent:(NSString *)title
     dispatch_async(serialQueue, ^{
         RNCalendarEvents *strongSelf = weakSelf;
 
-        NSDictionary *response = [strongSelf buildAndSaveEvent:details options:options];
+        NSDictionary *response = [strongSelf buildAndSaveReminder:details options:options];
 
         if ([response valueForKey:@"success"] != [NSNull null]) {
             resolve([response valueForKey:@"success"]);
