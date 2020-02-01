@@ -847,8 +847,6 @@ RCT_EXPORT_METHOD(authorizeReminders:(RCTPromiseResolveBlock)resolve rejecter:(R
 
 RCT_EXPORT_METHOD(findCalendarsByType:(NSString *)type resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-  
-
     NSArray* calendars = nil;
     if ([type isEqualToString:@"reminder"]) {
         if (![self isCalendarAccessGranted]) {
@@ -884,46 +882,27 @@ RCT_EXPORT_METHOD(findCalendarsByType:(NSString *)type resolver:(RCTPromiseResol
     }
 }
 
-// RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
-// {
-//     if (![self isCalendarAccessGranted]) {
-//         reject(@"error", @"unauthorized to access calendar", nil);
-//         return;
-//     }
-
-//     NSArray* calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
-
-//     if (!calendars) {
-//         reject(@"error", @"error finding calendars", nil);
-//     } else {
-//         NSMutableArray *eventCalendars = [[NSMutableArray alloc] init];
-//         for (EKCalendar *calendar in calendars) {
-//             BOOL isPrimary = [calendar isEqual:[self.eventStore defaultCalendarForNewEvents]];
-//             [eventCalendars addObject:@{
-//                                         @"id": calendar.calendarIdentifier,
-//                                         @"title": calendar.title ? calendar.title : @"",
-//                                         @"allowsModifications": @(calendar.allowsContentModifications),
-//                                         @"source": calendar.source && calendar.source.title ? calendar.source.title : @"",
-//                                         @"isPrimary": @(isPrimary),
-//                                         @"allowedAvailabilities": [self calendarSupportedAvailabilitiesFromMask:calendar.supportedEventAvailabilities],
-//                                         @"color": [self hexStringFromColor:[UIColor colorWithCGColor:calendar.CGColor]]
-//                                         }];
-//         }
-//         resolve(eventCalendars);
-//     }
-// }
-
 RCT_EXPORT_METHOD(saveCalendar:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (![self isCalendarAccessGranted]) {
-        return reject(@"error", @"unauthorized to access calendar", nil);
-    }
-
     EKCalendar *calendar = nil;
     EKSource *calendarSource = nil;
     NSString *title = [RCTConvert NSString:options[@"title"]];
     NSNumber *color = [RCTConvert NSNumber:options[@"color"]];
     NSString *type = [RCTConvert NSString:options[@"entityType"]];
+
+    if([type isEqualToString:@"event"]) {
+        if (![self isCalendarAccessGranted]) {
+            return reject(@"error", @"unauthorized to access calendar", nil);
+        }
+     } else if ([type isEqualToString:@"reminder"]) {
+        if (![self isReminderAccessGranted]) {
+            return reject(@"error", @"unauthorized to access reminder", nil);
+        }
+    } else {
+        return reject(@"error",
+             [NSString stringWithFormat:@"Calendar entityType %@ is not supported", type],
+             nil);
+    }
 
     // First: Check if the user has an iCloud source set-up.
     for (EKSource *source in self.eventStore.sources) {
@@ -948,14 +927,10 @@ RCT_EXPORT_METHOD(saveCalendar:(NSDictionary *)options resolver:(RCTPromiseResol
     }
 
     if ([type isEqualToString:@"event"]) {
-    calendar = [EKCalendar calendarForEntityType:EKEntityTypeEvent eventStore:self.eventStore];
-    } else if ([type isEqualToString:@"reminder"]) {
-      calendar = [EKCalendar calendarForEntityType:EKEntityTypeReminder eventStore:self.eventStore];
+        calendar = [EKCalendar calendarForEntityType:EKEntityTypeEvent eventStore:self.eventStore];
     } else {
-        return reject(@"error",
-             [NSString stringWithFormat:@"Calendar entityType %@ is not supported", type],
-             nil);
-    }
+        calendar = [EKCalendar calendarForEntityType:EKEntityTypeReminder eventStore:self.eventStore];
+    } 
 
     calendar.source = calendarSource;
     if (title) {
