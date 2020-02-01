@@ -25,7 +25,7 @@ export default {
     return RNCalendarEvents.fetchAllEvents(startDate, endDate, calendars);
   },
 
-  findCalendars(type = "calendar") {
+  findCalendars(type = "event") {
     return RNCalendarEvents.findCalendarsByType(type);
   },
 
@@ -42,6 +42,10 @@ export default {
 
   saveEvent(title, details, options = {}) {
     return RNCalendarEvents.saveEvent(title, details, options);
+  },
+
+  saveReminder(title, details, options = {}) {
+    return RNCalendarEvents.saveReminder(title, details, options);
   },
 
   removeEvent(id, options = { futureEvents: false }) {

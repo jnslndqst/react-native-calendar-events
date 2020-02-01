@@ -1010,6 +1010,33 @@ RCT_EXPORT_METHOD(findEventById:(NSString *)eventId resolver:(RCTPromiseResolveB
     });
 }
 
+RCT_EXPORT_METHOD(saveReminder:(NSString *)title
+                  settings:(NSDictionary *)settings
+                  options:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    if (![self isReminderAccessGranted]) {
+        reject(@"error", @"unauthorized to access reminder", nil);
+        return;
+    }
+
+    NSMutableDictionary *details = [NSMutableDictionary dictionaryWithDictionary:settings];
+    [details setValue:title forKey:_title];
+
+    __weak RNCalendarEvents *weakSelf = self;
+    dispatch_async(serialQueue, ^{
+        RNCalendarEvents *strongSelf = weakSelf;
+
+        NSDictionary *response = [strongSelf buildAndSaveReminder:details options:options];
+
+        if ([response valueForKey:@"success"] != [NSNull null]) {
+            resolve([response valueForKey:@"success"]);
+        } else {
+            reject(@"error", [response valueForKey:@"error"], nil);
+        }
+    });
+}
 RCT_EXPORT_METHOD(saveEvent:(NSString *)title
                   settings:(NSDictionary *)settings
                   options:(NSDictionary *)options
@@ -1028,7 +1055,7 @@ RCT_EXPORT_METHOD(saveEvent:(NSString *)title
     dispatch_async(serialQueue, ^{
         RNCalendarEvents *strongSelf = weakSelf;
 
-        NSDictionary *response = [strongSelf buildAndSaveReminder:details options:options];
+        NSDictionary *response = [strongSelf buildAndSaveEvent:details options:options];
 
         if ([response valueForKey:@"success"] != [NSNull null]) {
             resolve([response valueForKey:@"success"]);

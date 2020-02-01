@@ -42,6 +42,10 @@ export default {
     return CalendarEvents.findById(id);
   },
 
+  async saveReminder(title, details, options = { sync: false }) {
+    throw new Error("Use saveEvent instead. This is for IOS only");
+  },
+
   async saveEvent(title, details, options = { sync: false }) {
     return CalendarEvents.saveEvent(title, details, options);
   },

@@ -203,6 +203,18 @@ export default class ReactNativeCalendarEvents {
     calendarIds?: string[]
   ): Promise<CalendarEventReadable[]>;
   /**
+   * Creates or updates a reminder. To update an reminder, the event id must be defined.
+   * @param title - The title of the event
+   * @param details - Event details
+   * @param [options] - Options specific to the saved event.
+   * @returns - Promise resolving to saved reminders's ID.
+   */
+  static saveReminder(
+    title: string,
+    details: CalendarEventWritable,
+    options?: Options
+  ): Promise<string>;
+  /**
    * Creates or updates a calendar event. To update an event, the event id must be defined.
    * @param title - The title of the event
    * @param details - Event details
