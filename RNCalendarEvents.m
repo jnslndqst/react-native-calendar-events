@@ -81,6 +81,13 @@ RCT_EXPORT_MODULE()
     return status == EKAuthorizationStatusAuthorized;
 }
 
+- (BOOL)isReminderAccessGranted
+{
+    EKAuthorizationStatus status = [EKEventStore authorizationStatusForEntityType:EKEntityTypeReminder];
+
+    return status == EKAuthorizationStatusAuthorized;
+}
+
 #pragma mark -
 #pragma mark Event Store Accessors
 
@@ -223,20 +230,6 @@ RCT_EXPORT_MODULE()
     NSString *eventId = [RCTConvert NSString:details[_id]];
     NSString *title = [RCTConvert NSString:details[_title]];
     NSString *location = [RCTConvert NSString:details[_location]];
-    // //NSNumber *allDay = [RCTConvert NSNumber:details[_allDay]];
-    // //The start date of the task.
-    // NSDate *startDate = [RCTConvert NSDate:details[_startDate]];
-    // NSCalendar *gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
-
-    // NSDateComponents *startDateComponent = [[NSDateComponents alloc] init];
-    // // Extract date components into components1
-    // NSDateComponents *components1 = [gregorianCalendar components:NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit
-    //                                                  fromDate:startDate];
-
-
-    //The date by which the reminder should be completed.
-    //NSDate *dueDate = [RCTConvert NSDate:details[_dueDate]];
-
     NSString *notes = [RCTConvert NSString:details[_notes]];
     NSString *url = [RCTConvert NSString:details[_url]];
     NSArray *alarms = [RCTConvert NSArray:details[_alarms]];
@@ -250,9 +243,8 @@ RCT_EXPORT_MODULE()
 
     } else {
         reminder = [EKReminder reminderWithEventStore:self.eventStore];
-       // reminder.calendar = [self.eventStore defaultCalendarForNew];
+        // reminder.calendar = [self.eventStore defaultCalendarForNew];
         reminder.timeZone = [NSTimeZone defaultTimeZone];
-
         if (calendarId) {
             EKCalendar *calendar = [self.eventStore calendarWithIdentifier:calendarId];
 
@@ -269,19 +261,7 @@ RCT_EXPORT_MODULE()
     if (location) {
         reminder.location = location;
     }
-
-    // if (startDate) {
-    //     reminder.startDate = startDate;
-    // }
-
-    // if (dueDate) {
-    //     reminder.dueDate = dueDate;
-    // }
-
-    // if (allDay) {
-    //     reminder.allDay = [allDay boolValue];
-    // }
-
+  
     if (notes) {
         reminder.notes = notes;
     }
@@ -297,60 +277,21 @@ RCT_EXPORT_MODULE()
         }
     }
 
-    // if (recurrenceRule) {
-    //     NSString *frequency = [RCTConvert NSString:recurrenceRule[@"frequency"]];
-    //     NSInteger interval = [RCTConvert NSInteger:recurrenceRule[@"interval"]];
-    //     NSInteger occurrence = [RCTConvert NSInteger:recurrenceRule[@"occurrence"]];
-    //     NSDate *endDate = [RCTConvert NSDate:recurrenceRule[@"endDate"]];
-    //     NSArray *daysOfWeek = [RCTConvert NSArray:recurrenceRule[@"daysOfWeek"]];
-    //     NSInteger weekPositionInMonth = [RCTConvert NSInteger:recurrenceRule[@"weekPositionInMonth"]];
-
-    //     EKRecurrenceRule *rule = [self createRecurrenceRule:frequency interval:interval occurrence:occurrence endDate:endDate days:daysOfWeek weekPositionInMonth: weekPositionInMonth];
-    //     if (rule) {
-    //         reminder.recurrenceRules = [NSArray arrayWithObject:rule];
-    //     } else {
-    //         reminder.recurrenceRules = nil;
-    //     }
-    // }
-
-    // if (availability) {
-    //     reminder.availability = [self availablilityConstantMatchingString:availability];
-    // }
-
-    NSURL *URL = [NSURL URLWithString:[url stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]]];
-    if (URL) {
-        reminder.URL = URL;
+    if (url) {
+        NSURL *URL = [NSURL URLWithString:[url stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLHostAllowedCharacterSet]]];
+        if (URL) {
+            reminder.URL = URL;
+        }
     }
-
-    // if ([details objectForKey:@"structuredLocation"] && [[details objectForKey:@"structuredLocation"] count]) {
-    //     NSDictionary *locationOptions = [details valueForKey:@"structuredLocation"];
-    //     NSDictionary *geo = [locationOptions valueForKey:@"coords"];
-    //     CLLocation *geoLocation = [[CLLocation alloc] initWithLatitude:[[geo valueForKey:@"latitude"] doubleValue]
-    //                                                          longitude:[[geo valueForKey:@"longitude"] doubleValue]];
-        
-    //     reminder.structuredLocation = [EKStructuredLocation locationWithTitle:[locationOptions valueForKey:@"title"]];
-    //     reminder.structuredLocation.geoLocation = geoLocation;
-    //     reminder.structuredLocation.radius = [[locationOptions valueForKey:@"radius"] doubleValue];
-    // }
+   
 
      return [self saveReminder:reminder options:options];
 
 }
-//buildAndSaveReminder
+
 - (NSDictionary *)saveReminder:(EKReminder *)reminderEvent options:(NSDictionary *)options
 {
     NSMutableDictionary *response = [NSMutableDictionary dictionaryWithDictionary:@{@"success": [NSNull null], @"error": [NSNull null]}];
-    // NSDate *exceptionDate = [RCTConvert NSDate:options[@"exceptionDate"]];
-    // EKSpan eventSpan = EKSpanFutureEvents;
-
-    // if (exceptionDate) {
-    //     reminderEvent.startDate = exceptionDate;
-    //     eventSpan = EKSpanThisEvent;
-    // }
-
-    ///Users/jnslndqst/git/NavigationLab/node_modules/react-native-calendar-events/RNCalendarEvents.m:352:37: error: no visible @interface for 'EKEventStore' declares the selector 'saveReminder:span:commit:error:'
-    //BOOL success = [self.eventStore saveReminder:reminderEvent span:eventSpan commit:YES error:&error];
-
     NSError *error = nil;
     BOOL success = [self.eventStore saveReminder:reminderEvent commit:YES error:&error];
 
@@ -834,7 +775,7 @@ RCT_EXPORT_MODULE()
 #pragma mark -
 #pragma mark RCT Exports
 
-RCT_EXPORT_METHOD(authorizationStatus:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(eventAuthorizationStatus:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSString *status;
     EKAuthorizationStatus authStatus = [EKEventStore authorizationStatusForEntityType:EKEntityTypeEvent];
@@ -857,7 +798,30 @@ RCT_EXPORT_METHOD(authorizationStatus:(RCTPromiseResolveBlock)resolve rejecter:(
     resolve(status);
 }
 
-RCT_EXPORT_METHOD(authorizeEventStore:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(reminderAuthorizationStatus:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSString *status;
+    EKAuthorizationStatus authStatus = [EKEventStore authorizationStatusForEntityType:EKEntityTypeReminder];
+
+    switch (authStatus) {
+        case EKAuthorizationStatusDenied:
+            status = @"denied";
+            break;
+        case EKAuthorizationStatusRestricted:
+            status = @"restricted";
+            break;
+        case EKAuthorizationStatusAuthorized:
+            status = @"authorized";
+            break;
+        default:
+            status = @"undetermined";
+            break;
+    }
+
+    resolve(status);
+}
+
+RCT_EXPORT_METHOD(authorizeEvent:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     [self.eventStore requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error) {
         NSString *status = granted ? @"authorized" : @"denied";
@@ -869,15 +833,36 @@ RCT_EXPORT_METHOD(authorizeEventStore:(RCTPromiseResolveBlock)resolve rejecter:(
     }];
 }
 
-
-RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(authorizeReminders:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (![self isCalendarAccessGranted]) {
-        reject(@"error", @"unauthorized to access calendar", nil);
-        return;
-    }
+    [self.eventStore requestAccessToEntityType:EKEntityTypeReminder completion:^(BOOL granted, NSError *error) {
+        NSString *status = granted ? @"authorized" : @"denied";
+        if (!error) {
+            resolve(status);
+        } else {
+            reject(@"error", @"Reminders authorization request error", error);
+        }
+    }];
+}
 
-    NSArray* calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
+RCT_EXPORT_METHOD(findCalendarsByType:(NSString *)type resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+  
+
+    NSArray* calendars = nil;
+    if ([type isEqualToString:@"reminder"]) {
+        if (![self isCalendarAccessGranted]) {
+            reject(@"error", @"unauthorized to access calendar", nil);
+            return;
+        }
+        calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
+    } else {
+          if (![self isReminderAccessGranted]) {
+            reject(@"error", @"unauthorized to access reminders", nil);
+            return;
+        }
+        calendars = [self.eventStore calendarsForEntityType:EKEntityTypeEvent];
+    }
 
     if (!calendars) {
         reject(@"error", @"error finding calendars", nil);
@@ -898,6 +883,35 @@ RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
         resolve(eventCalendars);
     }
 }
+
+// RCT_EXPORT_METHOD(findCalendars:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+// {
+//     if (![self isCalendarAccessGranted]) {
+//         reject(@"error", @"unauthorized to access calendar", nil);
+//         return;
+//     }
+
+//     NSArray* calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
+
+//     if (!calendars) {
+//         reject(@"error", @"error finding calendars", nil);
+//     } else {
+//         NSMutableArray *eventCalendars = [[NSMutableArray alloc] init];
+//         for (EKCalendar *calendar in calendars) {
+//             BOOL isPrimary = [calendar isEqual:[self.eventStore defaultCalendarForNewEvents]];
+//             [eventCalendars addObject:@{
+//                                         @"id": calendar.calendarIdentifier,
+//                                         @"title": calendar.title ? calendar.title : @"",
+//                                         @"allowsModifications": @(calendar.allowsContentModifications),
+//                                         @"source": calendar.source && calendar.source.title ? calendar.source.title : @"",
+//                                         @"isPrimary": @(isPrimary),
+//                                         @"allowedAvailabilities": [self calendarSupportedAvailabilitiesFromMask:calendar.supportedEventAvailabilities],
+//                                         @"color": [self hexStringFromColor:[UIColor colorWithCGColor:calendar.CGColor]]
+//                                         }];
+//         }
+//         resolve(eventCalendars);
+//     }
+// }
 
 RCT_EXPORT_METHOD(saveCalendar:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {

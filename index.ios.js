@@ -1,48 +1,54 @@
-'use strict';
+"use strict";
 
-import { NativeModules, processColor } from 'react-native';
+import { NativeModules, processColor } from "react-native";
 
-const RNCalendarEvents = NativeModules.RNCalendarEvents
+const RNCalendarEvents = NativeModules.RNCalendarEvents;
 
 export default {
-
-  authorizationStatus () {
-    return RNCalendarEvents.authorizationStatus()
+  calendarAuthorizationStatus() {
+    return RNCalendarEvents.eventAuthorizationStatus();
   },
 
-  authorizeEventStore () {
-    return RNCalendarEvents.authorizeEventStore()
+  reminderAuthorizationStatus() {
+    return RNCalendarEvents.reminderAuthorizationStatus();
   },
 
-  fetchAllEvents (startDate, endDate, calendars = []) {
-    return RNCalendarEvents.fetchAllEvents(startDate, endDate, calendars)
+  authorizeCalendar() {
+    return RNCalendarEvents.authorizeEvent();
   },
 
-  findCalendars () {
-    return RNCalendarEvents.findCalendars();
+  authorizeReminder() {
+    return RNCalendarEvents.authorizeReminder();
   },
 
-  saveCalendar (options = {}) {
+  fetchAllEvents(startDate, endDate, calendars = []) {
+    return RNCalendarEvents.fetchAllEvents(startDate, endDate, calendars);
+  },
+
+  findCalendars(type = "calendar") {
+    return RNCalendarEvents.findCalendarsByType(type);
+  },
+
+  saveCalendar(options = {}) {
     return RNCalendarEvents.saveCalendar({
       ...options,
-      color: options.color ? processColor(options.color) : undefined,
+      color: options.color ? processColor(options.color) : undefined
     });
   },
 
-  findEventById (id) {
+  findEventById(id) {
     return RNCalendarEvents.findEventById(id);
   },
 
-  saveEvent (title, details, options = {}) {
-    return RNCalendarEvents.saveEvent(title, details, options)
+  saveEvent(title, details, options = {}) {
+    return RNCalendarEvents.saveEvent(title, details, options);
   },
 
-  removeEvent (id, options = {futureEvents: false}) {
-    return RNCalendarEvents.removeEvent(id, options)
+  removeEvent(id, options = { futureEvents: false }) {
+    return RNCalendarEvents.removeEvent(id, options);
   },
 
-  removeFutureEvents (id, options = {futureEvents: true}) {
-    return RNCalendarEvents.removeEvent(id, options)
+  removeFutureEvents(id, options = { futureEvents: true }) {
+    return RNCalendarEvents.removeEvent(id, options);
   }
-
-}
+};

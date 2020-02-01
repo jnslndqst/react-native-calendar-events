@@ -1,51 +1,60 @@
-'use strict'
+"use strict";
 
-import { NativeModules, processColor } from 'react-native'
+import { NativeModules, processColor } from "react-native";
 
-var CalendarEvents = NativeModules.CalendarEvents
+var CalendarEvents = NativeModules.CalendarEvents;
 
 export default {
-
-  async authorizationStatus () {
-    return CalendarEvents.getCalendarPermissions()
+  async calendarAuthorizationStatus() {
+    return CalendarEvents.getCalendarPermissions();
   },
 
-  async authorizeEventStore () {
-    return CalendarEvents.requestCalendarPermissions()
+  reminderAuthorizationStatus() {
+    throw new Error(
+      "Use calendarAuthorizationStatus instead. This is for IOS only"
+    );
   },
 
-  async fetchAllEvents (startDate, endDate, calendars = []) {
-    return CalendarEvents.findAllEvents(startDate, endDate, calendars)
+  async authorizeCalendar() {
+    return CalendarEvents.requestCalendarPermissions();
   },
 
-  async findCalendars () {
-    return CalendarEvents.findCalendars()
+  authorizeReminder() {
+    throw new Error("Use authorizeCalendar instead. This is for IOS only");
   },
 
-  async saveCalendar (options = {}) {
+  async fetchAllEvents(startDate, endDate, calendars = []) {
+    return CalendarEvents.findAllEvents(startDate, endDate, calendars);
+  },
+
+  async findCalendars(type = "calendar") {
+    return CalendarEvents.findCalendars();
+  },
+
+  async saveCalendar(options = {}) {
     return CalendarEvents.saveCalendar({
       ...options,
-      color: options.color ? processColor(options.color) : undefined,
+      color: options.color ? processColor(options.color) : undefined
     });
   },
 
-  async findEventById (id) {
-    return CalendarEvents.findById(id)
+  async findEventById(id) {
+    return CalendarEvents.findById(id);
   },
 
-  async saveEvent (title, details, options = {sync: false}) {
-    return CalendarEvents.saveEvent(title, details, options)
+  async saveEvent(title, details, options = { sync: false }) {
+    return CalendarEvents.saveEvent(title, details, options);
   },
 
-  async removeEvent (id, options = {sync: false}) {
-    return CalendarEvents.removeEvent(id, options)
+  async removeEvent(id, options = { sync: false }) {
+    return CalendarEvents.removeEvent(id, options);
   },
 
-  async uriForCalendar () {
-    return CalendarEvents.uriForCalendar()
+  async uriForCalendar() {
+    return CalendarEvents.uriForCalendar();
   },
 
-  openEventInCalendar (eventID) {
-    CalendarEvents.openEventInCalendar(eventID)
+  openEventInCalendar(eventID) {
+    CalendarEvents.openEventInCalendar(eventID);
   }
-}
+};
