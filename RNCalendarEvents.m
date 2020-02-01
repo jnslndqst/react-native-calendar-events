@@ -849,14 +849,14 @@ RCT_EXPORT_METHOD(findCalendarsByType:(NSString *)type resolver:(RCTPromiseResol
 {
     NSArray* calendars = nil;
     if ([type isEqualToString:@"reminder"]) {
-        if (![self isCalendarAccessGranted]) {
-            reject(@"error", @"unauthorized to access calendar", nil);
+        if (![self isReminderAccessGranted]) {
+            reject(@"error", @"unauthorized to access reminders", nil);
             return;
         }
         calendars = [self.eventStore calendarsForEntityType:EKEntityTypeReminder];
     } else {
-          if (![self isReminderAccessGranted]) {
-            reject(@"error", @"unauthorized to access reminders", nil);
+          if (![self isCalendarAccessGranted]) {
+            reject(@"error", @"unauthorized to access calendar", nil);
             return;
         }
         calendars = [self.eventStore calendarsForEntityType:EKEntityTypeEvent];
